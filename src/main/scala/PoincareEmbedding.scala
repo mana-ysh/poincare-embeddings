@@ -3,6 +3,8 @@ TODO: must refactor (may be inefficient calculation in gradients, and modify to 
 */
 
 
+import java.io.PrintWriter
+
 import breeze.linalg._
 import breeze.numerics._
 
@@ -15,7 +17,7 @@ class PoincareEmbedding(val numNode: Int, val dim: Int, val lr: Double){
   // initializer
   val sampler = breeze.stats.distributions.Uniform(-0.0001, 0.0001)
   val lookupTable = DenseMatrix.rand(numNode, dim, sampler)
-  val eps = 1e-6
+  val eps = 1e-5
 
   // assuming only child is corrupted
   def update(parent: Int, childPositive: Int, childNegatives: Array[Int]): Double ={
@@ -26,7 +28,7 @@ class PoincareEmbedding(val numNode: Int, val dim: Int, val lr: Double){
     })
     val z = scores.sum
 
-    val loss = scores(0) / scores.sum
+    val loss = log(scores(0) / scores.sum)
 
     val parentGrad = DenseMatrix.zeros[Double](allChild.length, dim)
     val childGrad = DenseMatrix.zeros[Double](allChild.length, dim)
@@ -46,9 +48,9 @@ class PoincareEmbedding(val numNode: Int, val dim: Int, val lr: Double){
     // update with Riemannian SGD
     for (i <- allChild.indices){
       val childId = allChild(i)
-      lookupTable(childId, ::).t := projection(lookupTable(childId, ::).t + lr * childGrad(i, ::).t
+      lookupTable(childId, ::).t := projection(lookupTable(childId, ::).t - lr * childGrad(i, ::).t
                                                 * pow(1.0 - pow(lookupTable(childId, ::).t, 2), 2) / 4.0)
-      lookupTable(parent, ::).t := projection(lookupTable(parent, ::).t + lr * parentGrad(i, ::).t
+      lookupTable(parent, ::).t := projection(lookupTable(parent, ::).t - lr * parentGrad(i, ::).t
                                                 * pow(1.0 - pow(lookupTable(childId, ::).t, 2), 2) / 4.0) // is it appropriate?
     }
 
@@ -85,15 +87,18 @@ class PoincareEmbedding(val numNode: Int, val dim: Int, val lr: Double){
     arcosh(value)
   }
 
-
   // TODO: separate from this class
   def arcosh(x: Double): Double ={
     require(x >= 1)
     log(x + sqrt(x*x -1))
   }
 
-  def save: Unit ={
-    throw new Exception()
+  def save(outFile: String): Unit ={
+    val fw = new PrintWriter(outFile)
+    for (i <- 0 until lookupTable.rows){
+      fw.write(lookupTable(i,::).t.toArray.mkString(" ") + "\n")
+    }
+    fw.close()
   }
 }
 
