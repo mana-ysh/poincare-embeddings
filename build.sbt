@@ -18,3 +18,6 @@ libraryDependencies  ++= Seq(
   // It depends on LGPL code
   "org.scalanlp" %% "breeze-viz" % "0.13.2"
 )
+
+// For logging
+libraryDependencies += "org.wvlet" %% "wvlet-log" % "1.2"

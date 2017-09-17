@@ -1,4 +1,8 @@
 import scala.util.Random
+import java.io.File
+import wvlet.log.{ConsoleLogHandler, FileHandler, Logger}
+import wvlet.log.LogFormatter.AppLogFormatter
+
 
 /*
 TODO
@@ -11,7 +15,19 @@ TODO
   * Created by hitoshi-ma on 2017/09/14.
   */
 object Train {
+    val logDir: String = "log"
+    val logFile: String = "main.log"
     def main(args: Array[String]): Unit ={
+      // setup logger
+      val logger = Logger("main-log")
+      logger.resetHandler(new FileHandler(
+        fileName = s"$logDir/$logFile", // Log file name
+        formatter = AppLogFormatter // Any log formatter you like
+      ))
+      logger.addHandler(new ConsoleLogHandler(
+        formatter = AppLogFormatter
+      ))
+
 
       val dim = 5
       val numNegative = 5
@@ -24,7 +40,7 @@ object Train {
 
       val rng = new Random(46)
       for (epoch <- 1 to maxEpoch){
-        println(s"start $epoch epoch")
+        logger.info(s"start $epoch epoch")
         var sumLoss: Double = 0
         for (i <- rng.shuffle(0 to train.size-1)) {
           val sample = train.take(i)
@@ -32,9 +48,9 @@ object Train {
           val loss = model.update(sample._1, sample._2, negatives)
           sumLoss += loss
         }
-        println(s"sum loss: $sumLoss")
+        logger.info(s"sum loss: $sumLoss")
       }
 
-      println("DONE ALL")
+      logger.info("DONE ALL")
     }
 }
