@@ -15,6 +15,7 @@ class PoincareEmbedding(val numNode: Int, val dim: Int, val lr: Double){
   // initializer
   val sampler = breeze.stats.distributions.Uniform(-0.0001, 0.0001)
   val lookupTable = DenseMatrix.rand(numNode, dim, sampler)
+  val eps = 1e-6
 
   // assuming only child is corrupted
   def update(parent: Int, childPositive: Int, childNegatives: Array[Int]): Double ={
@@ -42,14 +43,20 @@ class PoincareEmbedding(val numNode: Int, val dim: Int, val lr: Double){
       }
     }
 
-    // update
+    // update with Riemannian SGD
     for (i <- allChild.indices){
       val childId = allChild(i)
-      lookupTable(childId, ::).t := lookupTable(childId, ::).t + lr * childGrad(i, ::).t
-      lookupTable(parent, ::).t := lookupTable(parent, ::).t + lr * parentGrad(i, ::).t
+      lookupTable(childId, ::).t := projection(lookupTable(childId, ::).t + lr * childGrad(i, ::).t
+                                                * pow(1.0 - pow(lookupTable(childId, ::).t, 2), 2) / 4.0)
+      lookupTable(parent, ::).t := projection(lookupTable(parent, ::).t + lr * parentGrad(i, ::).t
+                                                * pow(1.0 - pow(lookupTable(childId, ::).t, 2), 2) / 4.0) // is it appropriate?
     }
 
     loss
+  }
+
+  def projection(v: DenseVector[Double]): DenseVector[Double] ={
+    if (norm(v) < 1.0) v else v / norm(v) - eps
   }
 
   def computeGradient(child: Int, parent: Int, score: Double, gradOut: Double): (DenseVector[Double], DenseVector[Double]) ={
