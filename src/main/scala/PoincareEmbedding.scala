@@ -28,7 +28,7 @@ class PoincareEmbedding(val numNode: Int, val dim: Int, val lr: Double){
     })
     val z = scores.sum
 
-    val loss = log(scores(0) / scores.sum)
+    val loss = -log(scores(0) / scores.sum)
 
     val parentGrad = DenseMatrix.zeros[Double](allChild.length, dim)
     val childGrad = DenseMatrix.zeros[Double](allChild.length, dim)

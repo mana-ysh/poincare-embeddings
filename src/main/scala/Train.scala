@@ -1,5 +1,4 @@
 import scala.util.Random
-import java.io.File
 import wvlet.log.{ConsoleLogHandler, FileHandler, Logger}
 import wvlet.log.LogFormatter.AppLogFormatter
 
@@ -28,10 +27,9 @@ object Train {
         formatter = AppLogFormatter
       ))
 
-
-      val dim = 5
-      val numNegative = 5
-      val lr = 0.001
+      val dim = 2
+      val numNegative = 10
+      val lr = 0.005
       val maxEpoch = 100
 
       val vocab = io.Vocabulary.load("./data/mammal/list")
@@ -50,6 +48,8 @@ object Train {
         }
         logger.info(s"sum loss: $sumLoss")
       }
+      logger.info("saving model...")
+      model.save(s"$logDir/model")
 
       logger.info("DONE ALL")
     }
